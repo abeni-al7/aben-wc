@@ -1,21 +1,27 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 )
 
 func main() {
-	args := os.Args[1:]
-	if (args[0] == "-c") {
-		path := args[1]
-		fileSize, err := getFileSize(path)
-		if err != nil {
-			println("There was a problem getting the size of the file")
-			return
-		}
-		fmt.Printf("%d %s\n", fileSize, path)
+	byteCount := flag.Bool("c", false, "print byte count")
+	flag.Parse()
+	
+	if !*byteCount || flag.NArg() != 1 {
+		fmt.Println("Usage: abenwc -c <file>")
+		os.Exit(1)
 	}
+	
+	path := flag.Arg(0)
+	fileSize, err := getFileSize(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("%d %s\n", fileSize, path)
 }
 
 func getFileSize(path string) (int64, error) {
