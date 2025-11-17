@@ -29,5 +29,8 @@ func getFileSize(path string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	if !fileInfo.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", path)
+	}
 	return fileInfo.Size(), nil
 }
