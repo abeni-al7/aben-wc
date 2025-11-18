@@ -39,8 +39,10 @@ func (suite *FileServiceTestSuite) SetupTest() {
 
 // TearDownTest removes the temporary file and directory.
 func (suite *FileServiceTestSuite) TearDownTest() {
-	os.Remove(suite.tempFile.Name())
-	os.RemoveAll(suite.tempDir)
+	err := os.Remove(suite.tempFile.Name())
+	suite.NoError(err, "Failed to remove temp file")
+	err = os.RemoveAll(suite.tempDir)
+	suite.NoError(err, "Failed to remove temp dir")
 }
 
 // TestGetFileSizeExistingFile tests getting the size of an existing file.
