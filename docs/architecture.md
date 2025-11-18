@@ -18,6 +18,7 @@ The `GetFileSize` function is part of the `FileService`. It takes a file path as
 
 The following diagram illustrates the data flow when a user requests the size of a file:
 
+```mermaid
 sequenceDiagram
     actor User
     participant Main as main.go
@@ -44,3 +45,4 @@ sequenceDiagram
     else invalid usage
         Ctrl->>User: print usage and exit 1
     end
+```
