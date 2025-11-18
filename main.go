@@ -1,36 +1,13 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"os"
+	"github.com/abeni-al7/aben-wc/controllers"
+	"github.com/abeni-al7/aben-wc/services"
 )
 
 func main() {
-	byteCount := flag.Bool("c", false, "print byte count")
-	flag.Parse()
-	
-	if !*byteCount || flag.NArg() != 1 {
-		fmt.Println("Usage: abenwc -c <file>")
-		os.Exit(1)
-	}
-	
-	path := flag.Arg(0)
-	fileSize, err := getFileSize(path)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("%d %s\n", fileSize, path)
-}
+	fs := services.FileService{}
+	fio := controllers.FileIO{Fs: fs}
 
-func getFileSize(path string) (int64, error) {
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		return 0, err
-	}
-	if !fileInfo.Mode().IsRegular() {
-		return 0, fmt.Errorf("%s is not a regular file", path)
-	}
-	return fileInfo.Size(), nil
+	fio.AcceptInput()
 }
