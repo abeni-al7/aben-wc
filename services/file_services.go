@@ -41,3 +41,27 @@ func (fs FileService) GetLineCount(path string) (int, error) {
 
 	return lineCount, nil
 }
+
+func (fs FileService) GetWordCount(path string) (int, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	// Create a scanner that splits by words
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanWords)
+
+	wordCount := 0
+	for scanner.Scan() {
+		wordCount++
+	}
+
+	// Check for scanning errors
+	if err := scanner.Err(); err != nil {
+		return 0, fmt.Errorf("error reading file: %w", err)
+	}
+
+	return wordCount, nil
+}

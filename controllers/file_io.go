@@ -15,6 +15,7 @@ type FileIO struct {
 func (fio FileIO) AcceptInput() {
 	byteCount := flag.Bool("c", false, "print byte count")
 	lineCount := flag.Bool("l", false, "print line count")
+	wordCount := flag.Bool("w", false, "print word count")
 	flag.Parse()
 	
 	if flag.NArg() != 1 {
@@ -37,5 +38,12 @@ func (fio FileIO) AcceptInput() {
 			os.Exit(1)
 		}
 		fmt.Printf("%d %s\n", lines, path)
+	} else if *wordCount {
+		words, err := fio.Fs.GetWordCount(path)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("%d %s\n", words, path)
 	}
 }
