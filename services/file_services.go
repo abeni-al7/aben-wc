@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 )
@@ -16,4 +17,27 @@ func (fs FileService) GetFileSize(path string) (int64, error) {
 		return 0, fmt.Errorf("%s is not a regular file", path)
 	}
 	return fileInfo.Size(), nil
+}
+
+func (fs FileService) GetLineCount(path string) (int, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	lineCount := 0
+
+	// Scan each line
+	for scanner.Scan() {
+		lineCount++
+	}
+
+	// Check for scanning errors
+	if err := scanner.Err(); err != nil {
+		return 0, fmt.Errorf("error reading file: %w", err)
+	}
+
+	return lineCount, nil
 }
