@@ -111,6 +111,70 @@ func (suite *FileServiceTestSuite) TestGetLineCountDirectory() {
 	suite.Error(err, "Should return an error for a directory")
 }
 
+// TestGetWordCountSingleWord tests getting the word count of a file with a single word.
+func (suite *FileServiceTestSuite) TestGetWordCountSingleWord() {
+	content := "hello"
+	tmpfile, err := os.CreateTemp("", "singleword")
+	suite.Require().NoError(err)
+	defer os.Remove(tmpfile.Name())
+
+	_, err = tmpfile.WriteString(content)
+	suite.Require().NoError(err)
+	suite.Require().NoError(tmpfile.Close())
+
+	count, err := suite.fs.GetWordCount(tmpfile.Name())
+	suite.NoError(err)
+	suite.Equal(1, count, "Word count should be 1")
+}
+
+// TestGetWordCountMultipleWords tests getting the word count of a file with multiple words.
+func (suite *FileServiceTestSuite) TestGetWordCountMultipleWords() {
+	// "hello world" in suite.tempFile
+	count, err := suite.fs.GetWordCount(suite.tempFile.Name())
+	suite.NoError(err)
+	suite.Equal(2, count, "Word count should be 2 for 'hello world'")
+}
+
+// TestGetWordCountMultipleLines tests getting the word count of a file with words on multiple lines.
+func (suite *FileServiceTestSuite) TestGetWordCountMultipleLines() {
+	content := "hello\nworld\nagain"
+	tmpfile, err := os.CreateTemp("", "multiline_words")
+	suite.Require().NoError(err)
+	defer os.Remove(tmpfile.Name())
+
+	_, err = tmpfile.WriteString(content)
+	suite.Require().NoError(err)
+	suite.Require().NoError(tmpfile.Close())
+
+	count, err := suite.fs.GetWordCount(tmpfile.Name())
+	suite.NoError(err)
+	suite.Equal(3, count, "Word count should be 3")
+}
+
+// TestGetWordCountEmptyFile tests getting the word count of an empty file.
+func (suite *FileServiceTestSuite) TestGetWordCountEmptyFile() {
+	tmpfile, err := os.CreateTemp("", "empty_words")
+	suite.Require().NoError(err)
+	defer os.Remove(tmpfile.Name())
+	suite.Require().NoError(tmpfile.Close())
+
+	count, err := suite.fs.GetWordCount(tmpfile.Name())
+	suite.NoError(err)
+	suite.Equal(0, count, "Word count should be 0 for empty file")
+}
+
+// TestGetWordCountNonExistentFile tests getting the word count of a non-existent file.
+func (suite *FileServiceTestSuite) TestGetWordCountNonExistentFile() {
+	_, err := suite.fs.GetWordCount("non-existent-file.txt")
+	suite.Error(err, "Should return an error for a non-existent file")
+}
+
+// TestGetWordCountDirectory tests getting the word count of a directory.
+func (suite *FileServiceTestSuite) TestGetWordCountDirectory() {
+	_, err := suite.fs.GetWordCount(suite.tempDir)
+	suite.Error(err, "Should return an error for a directory")
+}
+
 // TestFileServiceTestSuite runs the FileService test suite.
 func TestFileServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(FileServiceTestSuite))

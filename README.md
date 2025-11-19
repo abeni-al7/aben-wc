@@ -6,6 +6,7 @@
 
 -   **Byte Count**: Calculate the size of a file in bytes using the `-c` flag.
 -   **Line Count**: Count the number of lines in a file using the `-l` flag.
+-   **Word Count**: Count the number of words in a file using the `-w` flag.
 
 ## Architecture
 
@@ -54,6 +55,17 @@ To display the number of lines in a file:
 ```bash
 ./abenwc -l test.txt
 # Output: 7145 test.txt
+```
+
+### Count Words
+To display the number of words in a file:
+```bash
+./abenwc -w <filename>
+```
+**Example:**
+```bash
+./abenwc -w test.txt
+# Output: 58164 test.txt
 ```
 
 ## Running Tests
