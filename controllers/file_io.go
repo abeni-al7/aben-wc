@@ -16,6 +16,8 @@ func (fio FileIO) AcceptInput() {
 	byteCount := flag.Bool("c", false, "print byte count")
 	lineCount := flag.Bool("l", false, "print line count")
 	wordCount := flag.Bool("w", false, "print word count")
+	charCount := flag.Bool("m", false, "print character count")
+
 	flag.Parse()
 	
 	if flag.NArg() != 1 {
@@ -45,5 +47,12 @@ func (fio FileIO) AcceptInput() {
 			os.Exit(1)
 		}
 		fmt.Printf("%d %s\n", words, path)
+	} else if *charCount {
+		chars, err := fio.Fs.GetCharCount(path)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("%d %s\n", chars, path)
 	}
 }
