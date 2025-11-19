@@ -80,7 +80,7 @@ func (suite *FileServiceTestSuite) TestGetLineCountMultipleLines() {
 
 	_, err = tmpfile.WriteString(content)
 	suite.Require().NoError(err)
-	tmpfile.Close()
+	suite.Require().NoError(tmpfile.Close())
 
 	count, err := suite.fs.GetLineCount(tmpfile.Name())
 	suite.NoError(err)
