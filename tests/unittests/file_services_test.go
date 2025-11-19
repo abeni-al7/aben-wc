@@ -64,6 +64,53 @@ func (suite *FileServiceTestSuite) TestGetFileSizeDirectory() {
 	suite.Error(err, "Should return an error for a directory")
 }
 
+// TestGetLineCountSingleLine tests getting the line count of a file with a single line.
+func (suite *FileServiceTestSuite) TestGetLineCountSingleLine() {
+	count, err := suite.fs.GetLineCount(suite.tempFile.Name())
+	suite.NoError(err, "Should not return an error for an existing file")
+	suite.Equal(1, count, "Line count should be 1 for single line file")
+}
+
+// TestGetLineCountMultipleLines tests getting the line count of a file with multiple lines.
+func (suite *FileServiceTestSuite) TestGetLineCountMultipleLines() {
+	content := "line1\nline2\nline3"
+	tmpfile, err := os.CreateTemp("", "multiline")
+	suite.Require().NoError(err)
+	defer os.Remove(tmpfile.Name())
+
+	_, err = tmpfile.WriteString(content)
+	suite.Require().NoError(err)
+	tmpfile.Close()
+
+	count, err := suite.fs.GetLineCount(tmpfile.Name())
+	suite.NoError(err)
+	suite.Equal(3, count, "Line count should be 3")
+}
+
+// TestGetLineCountEmptyFile tests getting the line count of an empty file.
+func (suite *FileServiceTestSuite) TestGetLineCountEmptyFile() {
+	tmpfile, err := os.CreateTemp("", "empty")
+	suite.Require().NoError(err)
+	defer os.Remove(tmpfile.Name())
+	tmpfile.Close()
+
+	count, err := suite.fs.GetLineCount(tmpfile.Name())
+	suite.NoError(err)
+	suite.Equal(0, count, "Line count should be 0 for empty file")
+}
+
+// TestGetLineCountNonExistentFile tests getting the line count of a non-existent file.
+func (suite *FileServiceTestSuite) TestGetLineCountNonExistentFile() {
+	_, err := suite.fs.GetLineCount("non-existent-file.txt")
+	suite.Error(err, "Should return an error for a non-existent file")
+}
+
+// TestGetLineCountDirectory tests getting the line count of a directory.
+func (suite *FileServiceTestSuite) TestGetLineCountDirectory() {
+	_, err := suite.fs.GetLineCount(suite.tempDir)
+	suite.Error(err, "Should return an error for a directory")
+}
+
 // TestFileServiceTestSuite runs the FileService test suite.
 func TestFileServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(FileServiceTestSuite))
