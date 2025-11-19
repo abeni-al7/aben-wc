@@ -14,18 +14,28 @@ type FileIO struct {
 
 func (fio FileIO) AcceptInput() {
 	byteCount := flag.Bool("c", false, "print byte count")
+	lineCount := flag.Bool("l", false, "print line count")
 	flag.Parse()
 	
-	if !*byteCount || flag.NArg() != 1 {
-		fmt.Println("Usage: abenwc -c <file>")
+	if flag.NArg() != 1 {
+		fmt.Println("Usage: abenwc -<arg> <file>")
 		os.Exit(1)
 	}
-	
+
 	path := flag.Arg(0)
-	fileSize, err := fio.Fs.GetFileSize(path)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
+	if *byteCount {
+		fileSize, err := fio.Fs.GetFileSize(path)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("%d %s\n", fileSize, path)
+	} else if *lineCount {
+		lines, err := fio.Fs.GetLineCount(path)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("%d %s\n", lines, path)
 	}
-	fmt.Printf("%d %s\n", fileSize, path)
 }
