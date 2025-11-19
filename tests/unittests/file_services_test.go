@@ -129,7 +129,7 @@ func (suite *FileServiceTestSuite) TestGetWordCountSingleWord() {
 
 // TestGetWordCountMultipleWords tests getting the word count of a file with multiple words.
 func (suite *FileServiceTestSuite) TestGetWordCountMultipleWords() {
-	// "hello world" is already in suite.tempFile
+	// "hello world" in suite.tempFile
 	count, err := suite.fs.GetWordCount(suite.tempFile.Name())
 	suite.NoError(err)
 	suite.Equal(2, count, "Word count should be 2 for 'hello world'")
