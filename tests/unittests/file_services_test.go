@@ -175,6 +175,71 @@ func (suite *FileServiceTestSuite) TestGetWordCountDirectory() {
 	suite.Error(err, "Should return an error for a directory")
 }
 
+// TestGetCharCountSingleChar tests getting the char count of a file with a single character.
+func (suite *FileServiceTestSuite) TestGetCharCountSingleChar() {
+	content := "a"
+	tmpfile, err := os.CreateTemp("", "singlechar")
+	suite.Require().NoError(err)
+	defer os.Remove(tmpfile.Name())
+
+	_, err = tmpfile.WriteString(content)
+	suite.Require().NoError(err)
+	suite.Require().NoError(tmpfile.Close())
+
+	count, err := suite.fs.GetCharCount(tmpfile.Name())
+	suite.NoError(err)
+	suite.Equal(1, count, "Char count should be 1")
+}
+
+// TestGetCharCountMultipleChars tests getting the char count of a file with multiple characters.
+func (suite *FileServiceTestSuite) TestGetCharCountMultipleChars() {
+	// "hello world" is 11 characters
+	count, err := suite.fs.GetCharCount(suite.tempFile.Name())
+	suite.NoError(err)
+	suite.Equal(11, count, "Char count should be 11 for 'hello world'")
+}
+
+// TestGetCharCountMultibyteChars tests getting the char count of a file with multibyte characters.
+func (suite *FileServiceTestSuite) TestGetCharCountMultibyteChars() {
+	content := "Hello 🌍" // 6 chars + space + emoji = 7 runes
+	
+	tmpfile, err := os.CreateTemp("", "multibyte")
+	suite.Require().NoError(err)
+	defer os.Remove(tmpfile.Name())
+
+	_, err = tmpfile.WriteString(content)
+	suite.Require().NoError(err)
+	suite.Require().NoError(tmpfile.Close())
+
+	count, err := suite.fs.GetCharCount(tmpfile.Name())
+	suite.NoError(err)
+	suite.Equal(7, count, "Char count should be 7 for 'Hello 🌍'")
+}
+
+// TestGetCharCountEmptyFile tests getting the char count of an empty file.
+func (suite *FileServiceTestSuite) TestGetCharCountEmptyFile() {
+	tmpfile, err := os.CreateTemp("", "empty_chars")
+	suite.Require().NoError(err)
+	defer os.Remove(tmpfile.Name())
+	suite.Require().NoError(tmpfile.Close())
+
+	count, err := suite.fs.GetCharCount(tmpfile.Name())
+	suite.NoError(err)
+	suite.Equal(0, count, "Char count should be 0 for empty file")
+}
+
+// TestGetCharCountNonExistentFile tests getting the char count of a non-existent file.
+func (suite *FileServiceTestSuite) TestGetCharCountNonExistentFile() {
+	_, err := suite.fs.GetCharCount("non-existent-file.txt")
+	suite.Error(err, "Should return an error for a non-existent file")
+}
+
+// TestGetCharCountDirectory tests getting the char count of a directory.
+func (suite *FileServiceTestSuite) TestGetCharCountDirectory() {
+	_, err := suite.fs.GetCharCount(suite.tempDir)
+	suite.Error(err, "Should return an error for a directory")
+}
+
 // TestFileServiceTestSuite runs the FileService test suite.
 func TestFileServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(FileServiceTestSuite))
