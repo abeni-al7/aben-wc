@@ -30,7 +30,7 @@ The `main` package serves as the composition root. It is responsible for:
 ### 2.2 Controller Layer (`controllers/file_io.go`)
 The `FileIO` struct acts as the controller. It handles the interaction with the user via the command line.
 -   **Responsibilities**:
-    -   Parsing command-line flags (e.g., `-c` for byte count, `-l` for line count, `-w` for word count).
+    -   Parsing command-line flags (e.g., `-c` for byte count, `-l` for line count, `-w` for word count, `-m` for character count).
     -   Validating arguments (ensuring a file path is provided).
     -   Routing requests to the appropriate service method.
     -   Formatting and printing the results to `stdout`.
@@ -50,6 +50,10 @@ The `FileService` struct encapsulates the core logic for file analysis. It is st
     -   Opens the file using `os.Open`.
     -   Uses `bufio.Scanner` with `bufio.ScanWords` split function.
     -   Iterates through the file word by word and returns the total count.
+-   **`GetCharCount(path string) (int, error)`**:
+    -   Opens the file using `os.Open`.
+    -   Uses `bufio.NewReader` to read the file.
+    -   Iterates through the file rune by rune using `ReadRune` and returns the total count.
 
 ## 3. Data Flow
 
@@ -83,6 +87,13 @@ sequenceDiagram
         Controller->>Service: GetWordCount("file.txt")
         Service->>FS: os.Open("file.txt")
         loop Scan Words
+            Service->>FS: Read content
+        end
+        Service-->>Controller: count (int)
+    else Flag is -m (Character Count)
+        Controller->>Service: GetCharCount("file.txt")
+        Service->>FS: os.Open("file.txt")
+        loop Read Runes
             Service->>FS: Read content
         end
         Service-->>Controller: count (int)

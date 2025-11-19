@@ -3,10 +3,12 @@ package services
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 )
 
-type FileService struct {}
+type FileService struct{}
+
 
 func (fs FileService) GetFileSize(path string) (int64, error) {
 	fileInfo, err := os.Stat(path)
@@ -64,4 +66,28 @@ func (fs FileService) GetWordCount(path string) (int, error) {
 	}
 
 	return wordCount, nil
+}
+
+func (fs FileService) GetCharCount(path string) (int, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewReader(file)
+	charCount := 0
+	
+	// Scan each rune
+	for {
+		_, _, err := scanner.ReadRune()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return 0, fmt.Errorf("unable to read characters: %w", err)
+		}
+		charCount += 1
+	}
+	
+	return charCount, nil
 }
