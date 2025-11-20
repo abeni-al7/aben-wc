@@ -31,6 +31,7 @@ The `main` package serves as the composition root. It is responsible for:
 The `FileIO` struct acts as the controller. It handles the interaction with the user via the command line.
 -   **Responsibilities**:
     -   Parsing command-line flags (e.g., `-c` for byte count, `-l` for line count, `-w` for word count, `-m` for character count).
+    -   Handling the default case (no flags) by calculating line, word, and byte counts.
     -   Validating arguments (ensuring a file path is provided).
     -   Routing requests to the appropriate service method.
     -   Formatting and printing the results to `stdout`.
@@ -97,6 +98,13 @@ sequenceDiagram
             Service->>FS: Read content
         end
         Service-->>Controller: count (int)
+    else No Flag (Default)
+        Controller->>Service: GetFileSize("file.txt")
+        Service-->>Controller: size (int64)
+        Controller->>Service: GetLineCount("file.txt")
+        Service-->>Controller: lines (int)
+        Controller->>Service: GetWordCount("file.txt")
+        Service-->>Controller: words (int)
     end
 
     Controller-->>User: Print Result (e.g., "10 file.txt")

@@ -8,6 +8,7 @@
 -   **Line Count**: Count the number of lines in a file using the `-l` flag.
 -   **Word Count**: Count the number of words in a file using the `-w` flag.
 -   **Character Count**: Count the number of characters in a file using the `-m` flag.
+-   **Default Mode**: Display line, word, and byte counts when no flag is provided.
 
 ## Architecture
 
@@ -35,6 +36,17 @@ For a detailed overview of the project's design, components, and data flow, plea
 ## Usage
 
 Run the built executable with the desired flag and the target file path.
+
+### Default (All Counts)
+To display line, word, and byte counts:
+```bash
+./abenwc <filename>
+```
+**Example:**
+```bash
+./abenwc test.txt
+# Output: 7145  58164 342190 test.txt
+```
 
 ### Count Bytes
 To display the number of bytes in a file:
