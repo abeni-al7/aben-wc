@@ -38,27 +38,19 @@ The `FileIO` struct acts as the controller. It handles the interaction with the 
     -   Handling errors and printing them to `stderr`.
 
 ### 2.3 Service Layer (`services/file_services.go`)
-The `FileService` struct encapsulates the core logic for file analysis. It is stateless and interacts directly with the operating system.
--   **`GetFileSize(path string) (int64, error)`**:
-    -   Uses `os.Stat` to retrieve file metadata.
-    -   Validates that the path points to a regular file.
-    -   Returns the size in bytes.
--   **`GetLineCount(path string) (int, error)`**:
-    -   Opens the file using `os.Open`.
-    -   Uses `bufio.Scanner` to iterate through the file line by line.
-    -   Counts the lines and returns the total.
--   **`GetWordCount(path string) (int, error)`**:
-    -   Opens the file using `os.Open`.
-    -   Uses `bufio.Scanner` with `bufio.ScanWords` split function.
-    -   Iterates through the file word by word and returns the total count.
--   **`GetCharCount(path string) (int, error)`**:
-    -   Opens the file using `os.Open`.
-    -   Uses `bufio.NewReader` to read the file.
-    -   Iterates through the file rune by rune using `ReadRune` and returns the total count.
+The `FileService` struct encapsulates the core logic for text analysis. It is stateless and operates on in-memory byte slices, decoupling the logic from file system operations.
+-   **`GetFileSize(data []byte) int`**:
+    -   Returns the length of the byte slice.
+-   **`GetLineCount(data []byte) int`**:
+    -   Counts the number of newline characters (`\n`) in the data.
+-   **`GetWordCount(data []byte) int`**:
+    -   Parses the data as a string and counts the number of fields (words).
+-   **`GetCharCount(data []byte) int`**:
+    -   Counts the number of UTF-8 runes in the data.
 
 ## 3. Data Flow
 
-The following sequence diagram illustrates the control flow when a user executes the application. The flow diverges based on the provided flags.
+The following sequence diagram illustrates the control flow when a user executes the application. The controller handles I/O, while the service performs pure calculation.
 
 ```mermaid
 sequenceDiagram
@@ -66,48 +58,38 @@ sequenceDiagram
     participant Main as main.go
     participant Controller as FileIO (Controller)
     participant Service as FileService (Service)
-    participant FS as File System
+    participant Source as File System / Stdin
 
     User->>Main: Run `abenwc -l file.txt`
     Main->>Controller: AcceptInput()
-    Controller->>Controller: Parse Flags (-l)
+    Controller->>Controller: parseFlags()
+    Controller->>Source: Open file or check Stdin
+    Source-->>Controller: Input Source
+    Controller->>Source: Read All Data
+    Source-->>Controller: data ([]byte)
     
     alt Flag is -c (Byte Count)
-        Controller->>Service: GetFileSize("file.txt")
-        Service->>FS: os.Stat("file.txt")
-        FS-->>Service: FileInfo
-        Service-->>Controller: size (int64)
+        Controller->>Service: GetFileSize(data)
+        Service-->>Controller: size (int)
     else Flag is -l (Line Count)
-        Controller->>Service: GetLineCount("file.txt")
-        Service->>FS: os.Open("file.txt")
-        loop Scan Lines
-            Service->>FS: Read content
-        end
+        Controller->>Service: GetLineCount(data)
         Service-->>Controller: count (int)
     else Flag is -w (Word Count)
-        Controller->>Service: GetWordCount("file.txt")
-        Service->>FS: os.Open("file.txt")
-        loop Scan Words
-            Service->>FS: Read content
-        end
+        Controller->>Service: GetWordCount(data)
         Service-->>Controller: count (int)
     else Flag is -m (Character Count)
-        Controller->>Service: GetCharCount("file.txt")
-        Service->>FS: os.Open("file.txt")
-        loop Read Runes
-            Service->>FS: Read content
-        end
+        Controller->>Service: GetCharCount(data)
         Service-->>Controller: count (int)
     else No Flag (Default)
-        Controller->>Service: GetFileSize("file.txt")
-        Service-->>Controller: size (int64)
-        Controller->>Service: GetLineCount("file.txt")
+        Controller->>Service: GetLineCount(data)
         Service-->>Controller: lines (int)
-        Controller->>Service: GetWordCount("file.txt")
+        Controller->>Service: GetWordCount(data)
         Service-->>Controller: words (int)
+        Controller->>Service: GetFileSize(data)
+        Service-->>Controller: size (int)
     end
 
-    Controller-->>User: Print Result (e.g., "10 file.txt")
+    Controller-->>User: Print Result
 ```
 
 ## 4. Design Decisions
