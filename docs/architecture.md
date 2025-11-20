@@ -32,7 +32,8 @@ The `FileIO` struct acts as the controller. It handles the interaction with the 
 -   **Responsibilities**:
     -   Parsing command-line flags (e.g., `-c` for byte count, `-l` for line count, `-w` for word count, `-m` for character count).
     -   Handling the default case (no flags) by calculating line, word, and byte counts.
-    -   Validating arguments (ensuring a file path is provided).
+    -   Determining the input source (Standard Input or File Argument).
+    -   Reading the entire input data into memory.
     -   Routing requests to the appropriate service method.
     -   Formatting and printing the results to `stdout`.
     -   Handling errors and printing them to `stderr`.
@@ -95,5 +96,5 @@ sequenceDiagram
 ## 4. Design Decisions
 
 -   **Dependency Injection**: The `FileService` is injected into `FileIO`. This promotes loose coupling and makes the controller easier to test (e.g., by mocking the service).
--   **Standard Library**: The project relies heavily on Go's standard library (`flag`, `os`, `bufio`), avoiding unnecessary external dependencies for core functionality.
--   **Buffered I/O**: `bufio.Scanner` is used for line counting to efficiently handle large files without loading the entire content into memory.
+-   **Standard Library**: The project relies heavily on Go's standard library (`flag`, `os`, `bytes`, `strings`, `unicode/utf8`), avoiding unnecessary external dependencies for core functionality.
+-   **In-Memory Processing**: The application reads the entire file content into memory (`io.ReadAll`) before processing. This simplifies the implementation of the service layer, allowing it to operate on pure byte slices (`[]byte`). While this approach is simple and effective for small to medium-sized files, it may not be suitable for extremely large files that exceed available memory.
