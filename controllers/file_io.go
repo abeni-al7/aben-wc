@@ -13,92 +13,91 @@ type FileIO struct {
 	Fs services.FileService
 }
 
-func (fio FileIO) GetFileSize(data []byte) int {
-	fileSize, err := fio.Fs.GetFileSize(data)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-	return fileSize
-}
-
-func (fio FileIO) GetLineCount(data []byte) int {
-	lines, err := fio.Fs.GetLineCount(data)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-	return lines
-}
-
-func (fio FileIO) GetWordCount(data []byte) int {
-	words, err := fio.Fs.GetWordCount(data)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-	return words
-}
-
-func (fio FileIO) GetCharCount(data []byte) int {
-	chars, err := fio.Fs.GetCharCount(data)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-	return chars
+type WcFlags struct {
+	ByteCount bool
+	LineCount bool
+	WordCount bool
+	CharCount bool
 }
 
 func (fio FileIO) AcceptInput() {
-	var r *os.File 
-	var path string
+	flags := fio.parseFlags()
 
+	r, path, err := fio.getInputSource()
+	if err != nil {
+		fio.handleError(err)
+	}
+	defer r.Close()
+
+	data, err := fio.readData(r)
+	if err != nil {
+		fio.handleError(err)
+	}
+
+	fio.printOutput(data, path, flags)
+}
+
+func (fio FileIO) parseFlags() WcFlags {
 	byteCount := flag.Bool("c", false, "print byte count")
 	lineCount := flag.Bool("l", false, "print line count")
 	wordCount := flag.Bool("w", false, "print word count")
 	charCount := flag.Bool("m", false, "print character count")
-	
+
 	flag.Parse()
 
+	return WcFlags{
+		ByteCount: *byteCount,
+		LineCount: *lineCount,
+		WordCount: *wordCount,
+		CharCount: *charCount,
+	}
+}
+
+func (fio FileIO) getInputSource() (*os.File, string, error) {
 	stat, err := os.Stdin.Stat()
-	if (err == nil) && ((stat.Mode() & os.ModeCharDevice) == 0) {
-		r = os.Stdin
-	} else if flag.NArg() == 1 {
-		path = flag.Arg(0)
-		fmt.Println(path)
-		r, err = os.Open(path)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			os.Exit(1)
-		}
-		defer r.Close()
+	if err == nil && (stat.Mode()&os.ModeCharDevice) == 0 {
+		return os.Stdin, "", nil
+	}
+
+	if flag.NArg() == 1 {
+		path := flag.Arg(0)
+		f, err := os.Open(path)
+		return f, path, err
+	}
+
+	return nil, "", fmt.Errorf("usage: abenwc -<arg> <filepath>")
+}
+
+func (fio FileIO) readData(r io.Reader) ([]byte, error) {
+	return io.ReadAll(r)
+}
+
+func (fio FileIO) handleError(err error) {
+	if err.Error() == "usage: abenwc -<arg> <filepath>" {
+		fmt.Fprintln(os.Stderr, err)
 	} else {
-		fmt.Fprintf(os.Stderr, "Usage: abenwc -<arg> <filepath>\n")
-		os.Exit(1)
-	}
-
-	data, err := io.ReadAll(r)
-	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
 	}
+	os.Exit(1)
+}
 
-	if *byteCount {
-		fileSize := fio.GetFileSize(data)
+func (fio FileIO) printOutput(data []byte, path string, flags WcFlags) {
+	if flags.ByteCount {
+		fileSize := fio.Fs.GetFileSize(data)
 		fmt.Printf("%d %s\n", fileSize, path)
-	} else if *lineCount {
-		lines := fio.GetLineCount(data)
+	} else if flags.LineCount {
+		lines := fio.Fs.GetLineCount(data)
 		fmt.Printf("%d %s\n", lines, path)
-	} else if *wordCount {
-		words := fio.GetWordCount(data)
+	} else if flags.WordCount {
+		words := fio.Fs.GetWordCount(data)
 		fmt.Printf("%d %s\n", words, path)
-	} else if *charCount {
-		chars := fio.GetCharCount(data)
+	} else if flags.CharCount {
+		chars := fio.Fs.GetCharCount(data)
 		fmt.Printf("%d %s\n", chars, path)
 	} else {
-		fileSize := fio.GetFileSize(data)
-		lines := fio.GetLineCount(data)
-		words := fio.GetWordCount(data)
+		fileSize := fio.Fs.GetFileSize(data)
+		lines := fio.Fs.GetLineCount(data)
+		words := fio.Fs.GetWordCount(data)
 		fmt.Printf("%d  %d %d %s\n", lines, words, fileSize, path)
 	}
 }
