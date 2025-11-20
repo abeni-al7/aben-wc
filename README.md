@@ -9,6 +9,7 @@
 -   **Word Count**: Count the number of words in a file using the `-w` flag.
 -   **Character Count**: Count the number of characters in a file using the `-m` flag.
 -   **Default Mode**: Display line, word, and byte counts when no flag is provided.
+-   **Standard Input**: Support reading from standard input (stdin) via pipes.
 
 ## Architecture
 
@@ -35,7 +36,18 @@ For a detailed overview of the project's design, components, and data flow, plea
 
 ## Usage
 
-Run the built executable with the desired flag and the target file path.
+Run the built executable with the desired flag and the target file path, or pipe content to it.
+
+### Read from Standard Input
+To analyze content piped from another command:
+```bash
+cat test.txt | ./abenwc -l
+```
+**Example:**
+```bash
+cat test.txt | ./abenwc -l
+# Output: 7145
+```
 
 ### Default (All Counts)
 To display line, word, and byte counts:

@@ -1,93 +1,26 @@
 package services
 
 import (
-	"bufio"
-	"fmt"
-	"io"
-	"os"
+	"bytes"
+	"strings"
+	"unicode/utf8"
 )
 
 type FileService struct{}
 
 
-func (fs FileService) GetFileSize(path string) (int64, error) {
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		return 0, err
-	}
-	if !fileInfo.Mode().IsRegular() {
-		return 0, fmt.Errorf("%s is not a regular file", path)
-	}
-	return fileInfo.Size(), nil
+func (fs FileService) GetFileSize(data []byte) (int) {
+	return len(data)
 }
 
-func (fs FileService) GetLineCount(path string) (int, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return 0, fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	lineCount := 0
-
-	// Scan each line
-	for scanner.Scan() {
-		lineCount++
-	}
-
-	// Check for scanning errors
-	if err := scanner.Err(); err != nil {
-		return 0, fmt.Errorf("error reading file: %w", err)
-	}
-
-	return lineCount, nil
+func (fs FileService) GetLineCount(data []byte) (int) {
+	return bytes.Count(data, []byte{'\n'})
 }
 
-func (fs FileService) GetWordCount(path string) (int, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return 0, fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	// Create a scanner that splits by words
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanWords)
-
-	wordCount := 0
-	for scanner.Scan() {
-		wordCount++
-	}
-
-	// Check for scanning errors
-	if err := scanner.Err(); err != nil {
-		return 0, fmt.Errorf("error reading file: %w", err)
-	}
-
-	return wordCount, nil
+func (fs FileService) GetWordCount(data []byte) (int) {
+	return len(strings.Fields(string(data)))
 }
 
-func (fs FileService) GetCharCount(path string) (int, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return 0, fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewReader(file)
-	charCount := 0
-	
-	// Scan each rune
-	for {
-		_, _, err := scanner.ReadRune()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return 0, fmt.Errorf("unable to read characters: %w", err)
-		}
-		charCount += 1
-	}
-	
-	return charCount, nil
+func (fs FileService) GetCharCount(data []byte) (int) {
+	return utf8.RuneCount(data)
 }
