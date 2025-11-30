@@ -1,26 +1,49 @@
 package services
 
 import (
-	"bytes"
-	"strings"
-	"unicode/utf8"
+	"bufio"
+	"io"
+	"unicode"
 )
 
 type FileService struct{}
 
-
-func (fs FileService) GetFileSize(data []byte) (int) {
-	return len(data)
+type Counts struct {
+	Bytes int64
+	Lines int
+	Words int
+	Chars int
 }
 
-func (fs FileService) GetLineCount(data []byte) (int) {
-	return bytes.Count(data, []byte{'\n'})
-}
+func (fs FileService) CalculateCounts(r io.Reader) (Counts, error) {
+	counts := Counts{}
+	reader := bufio.NewReader(r)
 
-func (fs FileService) GetWordCount(data []byte) (int) {
-	return len(strings.Fields(string(data)))
-}
+	inWord := false
 
-func (fs FileService) GetCharCount(data []byte) (int) {
-	return utf8.RuneCount(data)
+	for {
+		r, size, err := reader.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return counts, err
+		}
+
+		counts.Bytes += int64(size)
+		counts.Chars++
+
+		if r == '\n' {
+			counts.Lines++
+		}
+
+		isSpace := unicode.IsSpace(r)
+		if inWord && isSpace {
+			inWord = false
+		} else if !inWord && !isSpace {
+			inWord = true
+			counts.Words++
+		}
+	}
+	return counts, nil
 }

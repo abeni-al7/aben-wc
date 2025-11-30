@@ -3,7 +3,6 @@ package controllers
 import (
 	"flag"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/abeni-al7/aben-wc/services"
@@ -29,12 +28,12 @@ func (fio FileIO) AcceptInput() {
 	}
 	defer r.Close()
 
-	data, err := fio.readData(r)
+	counts, err := fio.Fs.CalculateCounts(r)
 	if err != nil {
 		fio.handleError(err)
 	}
 
-	fio.printOutput(data, path, flags)
+	fio.printOutput(counts, path, flags)
 }
 
 func (fio FileIO) parseFlags() WcFlags {
@@ -68,10 +67,6 @@ func (fio FileIO) getInputSource() (*os.File, string, error) {
 	return nil, "", fmt.Errorf("usage: abenwc -<arg> <filepath>")
 }
 
-func (fio FileIO) readData(r io.Reader) ([]byte, error) {
-	return io.ReadAll(r)
-}
-
 func (fio FileIO) handleError(err error) {
 	if err.Error() == "usage: abenwc -<arg> <filepath>" {
 		fmt.Fprintln(os.Stderr, err)
@@ -81,23 +76,16 @@ func (fio FileIO) handleError(err error) {
 	os.Exit(1)
 }
 
-func (fio FileIO) printOutput(data []byte, path string, flags WcFlags) {
+func (fio FileIO) printOutput(counts services.Counts, path string, flags WcFlags) {
 	if flags.ByteCount {
-		fileSize := fio.Fs.GetFileSize(data)
-		fmt.Printf("%d %s\n", fileSize, path)
+		fmt.Printf("%d %s\n", counts.Bytes, path)
 	} else if flags.LineCount {
-		lines := fio.Fs.GetLineCount(data)
-		fmt.Printf("%d %s\n", lines, path)
+		fmt.Printf("%d %s\n", counts.Lines, path)
 	} else if flags.WordCount {
-		words := fio.Fs.GetWordCount(data)
-		fmt.Printf("%d %s\n", words, path)
+		fmt.Printf("%d %s\n", counts.Words, path)
 	} else if flags.CharCount {
-		chars := fio.Fs.GetCharCount(data)
-		fmt.Printf("%d %s\n", chars, path)
+		fmt.Printf("%d %s\n", counts.Chars, path)
 	} else {
-		fileSize := fio.Fs.GetFileSize(data)
-		lines := fio.Fs.GetLineCount(data)
-		words := fio.Fs.GetWordCount(data)
-		fmt.Printf("%d  %d %d %s\n", lines, words, fileSize, path)
+		fmt.Printf("%d  %d %d %s\n", counts.Lines, counts.Words, counts.Bytes, path)
 	}
 }

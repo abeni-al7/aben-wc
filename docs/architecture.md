@@ -33,21 +33,16 @@ The `FileIO` struct acts as the controller. It handles the interaction with the 
     -   Parsing command-line flags (e.g., `-c` for byte count, `-l` for line count, `-w` for word count, `-m` for character count).
     -   Handling the default case (no flags) by calculating line, word, and byte counts.
     -   Determining the input source (Standard Input or File Argument).
-    -   Reading the entire input data into memory.
     -   Routing requests to the appropriate service method.
     -   Formatting and printing the results to `stdout`.
     -   Handling errors and printing them to `stderr`.
 
 ### 2.3 Service Layer (`services/file_services.go`)
-The `FileService` struct encapsulates the core logic for text analysis. It is stateless and operates on in-memory byte slices, decoupling the logic from file system operations.
--   **`GetFileSize(data []byte) int`**:
-    -   Returns the length of the byte slice.
--   **`GetLineCount(data []byte) int`**:
-    -   Counts the number of newline characters (`\n`) in the data.
--   **`GetWordCount(data []byte) int`**:
-    -   Parses the data as a string and counts the number of fields (words).
--   **`GetCharCount(data []byte) int`**:
-    -   Counts the number of UTF-8 runes in the data.
+The `FileService` struct encapsulates the core logic for text analysis. It operates on an `io.Reader` to process data incrementally, ensuring memory efficiency.
+-   **`CalculateCounts(r io.Reader) (Counts, error)`**:
+    -   Reads the input stream rune by rune.
+    -   Calculates bytes, lines, words, and characters in a single pass.
+    -   Returns a `Counts` struct containing all metrics.
 
 ## 3. Data Flow
 
@@ -66,28 +61,24 @@ sequenceDiagram
     Controller->>Controller: parseFlags()
     Controller->>Source: Open file or check Stdin
     Source-->>Controller: Input Source
-    Controller->>Source: Read All Data
-    Source-->>Controller: data ([]byte)
     
+    Controller->>Service: CalculateCounts(reader)
+    loop Read Stream
+        Service->>Source: ReadRune()
+        Source-->>Service: rune, size
+    end
+    Service-->>Controller: Counts (struct)
+
     alt Flag is -c (Byte Count)
-        Controller->>Service: GetFileSize(data)
-        Service-->>Controller: size (int)
+        Controller->>Controller: Print Counts.Bytes
     else Flag is -l (Line Count)
-        Controller->>Service: GetLineCount(data)
-        Service-->>Controller: count (int)
+        Controller->>Controller: Print Counts.Lines
     else Flag is -w (Word Count)
-        Controller->>Service: GetWordCount(data)
-        Service-->>Controller: count (int)
+        Controller->>Controller: Print Counts.Words
     else Flag is -m (Character Count)
-        Controller->>Service: GetCharCount(data)
-        Service-->>Controller: count (int)
+        Controller->>Controller: Print Counts.Chars
     else No Flag (Default)
-        Controller->>Service: GetLineCount(data)
-        Service-->>Controller: lines (int)
-        Controller->>Service: GetWordCount(data)
-        Service-->>Controller: words (int)
-        Controller->>Service: GetFileSize(data)
-        Service-->>Controller: size (int)
+        Controller->>Controller: Print Counts.Lines, Counts.Words, Counts.Bytes
     end
 
     Controller-->>User: Print Result
@@ -96,5 +87,5 @@ sequenceDiagram
 ## 4. Design Decisions
 
 -   **Dependency Injection**: The `FileService` is injected into `FileIO`. This promotes loose coupling and makes the controller easier to test (e.g., by mocking the service).
--   **Standard Library**: The project relies heavily on Go's standard library (`flag`, `os`, `bytes`, `strings`, `unicode/utf8`), avoiding unnecessary external dependencies for core functionality.
--   **In-Memory Processing**: The application reads the entire file content into memory (`io.ReadAll`) before processing. This simplifies the implementation of the service layer, allowing it to operate on pure byte slices (`[]byte`). While this approach is simple and effective for small to medium-sized files, it may not be suitable for extremely large files that exceed available memory.
+-   **Standard Library**: The project relies heavily on Go's standard library (`flag`, `os`, `bufio`, `unicode`), avoiding unnecessary external dependencies for core functionality.
+-   **Streaming Processing**: The application reads the file content incrementally using `bufio.Reader`. This allows the application to handle large files efficiently without loading the entire content into memory.
